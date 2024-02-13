@@ -22,6 +22,9 @@ import os
 # Set the path to the credentials file
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C://Users/papne/.config/earthengine/credentials'
 
+
+GOOGLE_EARTH_ENGINE_API_KEY = os.getenv('GOOGLE_EARTH_ENGINE_API_KEY')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -30,9 +33,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',')
+SECRET_KEY = 'django-insecure-sv^=0*(95v=&7gbq#5%e!&ynw)w5c@la($mam+5)&1*a!+m8!1'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -86,11 +92,11 @@ WSGI_APPLICATION = 'my_gee_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DATABASE_NAME'),
-        'USER': os.getenv('DATABASE_USER'),
-        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
-        'HOST': os.getenv('DATABASE_HOST'),
-        'PORT': os.getenv('DATABASE_PORT', '5432'),
+        'NAME': 'my_django_db',
+        'USER': 'django_user',
+        'PASSWORD': 'lemontin1',
+        'HOST': 'localhost',  # Set to empty string for localhost
+        'PORT': '5432',  # Set to empty string for default
     }
 }
 
@@ -129,8 +135,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

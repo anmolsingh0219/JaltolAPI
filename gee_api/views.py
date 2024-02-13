@@ -4,13 +4,13 @@ from .utils import initialize_earth_engine
 import ee
 from django.conf import settings
 
-# email = "admin-133@ee-papnejaanmol.iam.gserviceaccount.com"
-# key_file = "C:/Users/papne/OneDrive/Desktop/WeLL_labs/ee-papnejaanmol-23b4363dc984.json"
-# credentials = ee.ServiceAccountCredentials(email=email, key_file=key_file)
+email = "admin-133@ee-papnejaanmol.iam.gserviceaccount.com"
+key_file = "C:/Users/papne/OneDrive/Desktop/WeLL_labs/ee-papnejaanmol-23b4363dc984.json"
+credentials = ee.ServiceAccountCredentials(email=email, key_file=key_file)
 
 def fetch_village_analysis(request, village_name):
     # initialize_earth_engine()
-    ee.Initialize()
+    ee.Initialize(credentials)
     try:
         # Filter the VillageLevel table for Karauli villages
         village_level_table = ee.FeatureCollection("users/jaltolwelllabs/RJ_2001_2011_final_proj32644").filter(ee.Filter.eq('Dist_N_11', 'Karauli'))
@@ -64,7 +64,7 @@ def fetch_village_analysis(request, village_name):
 
 def karauli_villages_geojson(request):
     # initialize_earth_engine()
-    ee.Initialize()
+    ee.Initialize(credentials)
     try:
         # Fetch the Karauli village features
         village_level_table = ee.FeatureCollection("users/jaltolwelllabs/RJ_2001_2011_final_proj32644")
@@ -90,7 +90,7 @@ def calculate_class_area(image, class_value, geometry):
 
 def area_change_karauli(request, village_name):
     # Initialize your Earth Engine credentials if not already initialized
-    ee.Initialize()
+    ee.Initialize(credentials)
 
     # Define the ImageCollection for Karauli LandUseLandCover
     image_collection = ee.ImageCollection("users/jaltolwelllabs/LULC/IndiaSAT_V2_draft")
@@ -141,7 +141,7 @@ def area_change_karauli(request, village_name):
     
     
 def get_karauli_raster(request):
-    ee.Initialize()
+    ee.Initialize(credentials)
     
     try:
         # Access the ImageCollection for Karauli
