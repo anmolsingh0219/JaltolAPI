@@ -20,7 +20,7 @@ load_dotenv()
 import os
 
 # Set the path to the credentials file
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'C://Users/papne/.config/earthengine/credentials'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './creds/credentials'
 
 
 GOOGLE_EARTH_ENGINE_API_KEY = os.getenv('GOOGLE_EARTH_ENGINE_API_KEY')
@@ -89,16 +89,16 @@ WSGI_APPLICATION = 'my_gee_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'my_django_db',
-        'USER': 'django_user',
-        'PASSWORD': 'lemontin1',
-        'HOST': 'localhost',  # Set to empty string for localhost
-        'PORT': '5432',  # Set to empty string for default
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'my_django_db',
+#         'USER': 'django_user',
+#         'PASSWORD': 'lemontin1',
+#         'HOST': 'localhost',  # Set to empty string for localhost
+#         'PORT': '5432',  # Set to empty string for default
+#     }
+# }
 
 
 # Password validation

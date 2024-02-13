@@ -5,7 +5,7 @@ import ee
 from django.conf import settings
 
 email = "admin-133@ee-papnejaanmol.iam.gserviceaccount.com"
-key_file = "C:/Users/papne/OneDrive/Desktop/WeLL_labs/ee-papnejaanmol-23b4363dc984.json"
+key_file = "./creds/ee-papnejaanmol-23b4363dc984.json"
 credentials = ee.ServiceAccountCredentials(email=email, key_file=key_file)
 
 def fetch_village_analysis(request, village_name):
