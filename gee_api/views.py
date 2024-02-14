@@ -106,20 +106,10 @@ def area_change_karauli(request, village_name):
     # Get the geometry for the specific village
     village_geometry = village_fc.geometry()
 
-    # Define the labels for the classes
+    # Define the labels for the classes (only include the specified two classes)
     class_labels = {
-        '0': 'Background',
-        '1': 'Built-up',
-        '2': 'Water in Kharif',
-        '3': 'Water in Kharif+Rabi',
-        '4': 'Water in Kharif+Rabi+Zaid',
-        '6': 'Tree/Forests',
-        '7': 'Barrenlands',
         '8': 'Single cropping cropland',
-        '9': 'Single Non-Kharif cropping cropland',
         '10': 'Double cropping cropland',
-        '11': 'Triple cropping cropland',
-        '12': 'Shrub_Scrub'
     }
 
     # Compute the area for each class over the years
@@ -130,7 +120,7 @@ def area_change_karauli(request, village_name):
         end_date = start_date.advance(1, 'year')
         year_image = image_collection.filterDate(start_date, end_date).mosaic()
         
-        # Calculate the area for each land cover class
+        # Calculate the area for each of the two land cover classes
         for class_value, class_name in class_labels.items():
             area = calculate_class_area(year_image, int(class_value), village_geometry)
             if year not in area_change_data:
