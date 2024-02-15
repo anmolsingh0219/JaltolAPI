@@ -8,6 +8,12 @@ email = "admin-133@ee-papnejaanmol.iam.gserviceaccount.com"
 key_file = "./creds/ee-papnejaanmol-23b4363dc984.json"
 credentials = ee.ServiceAccountCredentials(email=email, key_file=key_file)
 
+from django.http import HttpResponse
+
+def health_check(request):
+    # Perform necessary health check logic here
+    return HttpResponse("OK")
+
 def fetch_village_analysis(request, village_name):
     # initialize_earth_engine()
     ee.Initialize(credentials)
