@@ -1,4 +1,5 @@
 # gee_api/views.py
+from datetime import datetime  
 from django.http import JsonResponse
 from .utils import initialize_earth_engine
 import ee
@@ -9,6 +10,7 @@ key_file = "./creds/ee-papnejaanmol-23b4363dc984.json"
 credentials = ee.ServiceAccountCredentials(email=email, key_file=key_file)
 
 from django.http import HttpResponse
+ee.Initialize(credentials)
 
 def health_check(request):
     # Perform necessary health check logic here
@@ -92,7 +94,7 @@ def calculate_class_area(image, class_value, geometry):
         scale=10,
         maxPixels=1e10
     )
-    return area_calculation.get('b1').getInfo()
+    return area_calculation.get('b1').getInfo()/1e4
 
 def area_change_karauli(request, village_name):
     # Initialize your Earth Engine credentials if not already initialized
@@ -169,3 +171,58 @@ def get_karauli_raster(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
+
+precipitation_collection = ee.ImageCollection("users/jaltolwelllabs/IMD/rain")
+
+# Function to compute the yearly sum of precipitation
+def yearly_sum(year: int) -> ee.Image:
+    ee.Initialize(credentials)
+    # Your provided yearly_sum function here
+    precipitation_collection = ee.ImageCollection("users/jaltolwelllabs/IMD/rain")
+    filter = precipitation_collection.filterDate(ee.Date.fromYMD(year, 6, 1),
+                                                 ee.Date.fromYMD(ee.Number(year).add(1), 6, 1))
+    date = filter.first().get('system:time_start')
+    return filter.sum().set('system:time_start', date)
+
+# Function to get statistics for an image
+def getStats(image: ee.Image, geometry: ee.Geometry) -> ee.Image:
+    # Your provided getStats function here
+    stats = image.reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=geometry,
+        scale=1000
+    )
+    return image.setMulti(stats)
+
+# View function to fetch rainfall data
+def fetch_rainfall_data(request, village_name):
+    ee.Initialize(credentials)
+    try:
+
+        villages_fc = ee.FeatureCollection("users/jaltolwelllabs/RJ_2001_2011_final_proj32644").filter(
+        ee.Filter.eq('Dist_N_11', 'Karauli')
+       )
+        village_fc = villages_fc.filter(ee.Filter.eq('VCT_N_11', village_name))
+        village_geometry = village_fc.geometry()
+        print(village_geometry)
+
+        # Define the years you're interested in analyzing
+        year_list = [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021]  # Example years
+
+        # Process rainfall data for each year
+        hyd_yr_col = ee.ImageCollection(ee.List(year_list).map(lambda year: yearly_sum(year)))
+        collection_with_stats = hyd_yr_col.map(lambda image: getStats(image, village_geometry))
+
+        # Extract rainfall values and dates
+        rain_values = collection_with_stats.aggregate_array('b1').getInfo()  
+        dates = collection_with_stats.aggregate_array('system:time_start').getInfo()
+        dates = [datetime.fromtimestamp(date / 1000).strftime('%Y') for date in dates]
+        print(rain_values)
+        print(dates)
+
+        # Combine dates and rain values for the response
+        rainfall_data = list(zip(dates, rain_values))
+
+        return JsonResponse({'rainfall_data': rainfall_data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
