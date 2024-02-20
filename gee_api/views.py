@@ -149,6 +149,12 @@ def get_karauli_raster(request):
         # For example, to get the first image:
         image = image_collection.first()
         
+        valuesToKeep = [6, 8, 9, 10,11,12]
+        targetValues = [6,8,8,10,10,12]
+        nullValue = -1
+        remappedImage = image.remap(valuesToKeep, targetValues, nullValue)
+        maskedImage = remappedImage.updateMask(remappedImage.neq(nullValue))
+        
         # Define visualization parameters
         vis_params = {
             'bands': ['b1'],  # Update with the correct band names
@@ -162,7 +168,7 @@ def get_karauli_raster(request):
         }
         
         # Get the map ID and token
-        map_id_dict = image.getMapId(vis_params)
+        map_id_dict = maskedImage.getMapId(vis_params)
         
         # Construct the tiles URL template
         tiles_url = map_id_dict['tile_fetcher'].url_format
