@@ -1,5 +1,6 @@
 # gee_api/views.py
-from datetime import datetime  
+from datetime import datetime
+from venv import logger  
 from django.http import JsonResponse
 from .utils import initialize_earth_engine
 import ee
@@ -134,6 +135,7 @@ def area_change_karauli(request, village_name):
             if year not in area_change_data:
                 area_change_data[year] = {}
             area_change_data[year][class_name] = area
+            print(area)
 
     return JsonResponse(area_change_data)
     
@@ -147,34 +149,48 @@ def get_karauli_raster(request):
         
         # Here you might want to select a specific image by date or other criteria.
         # For example, to get the first image:
-        image = image_collection.first()
+        image = ee.Image(image_collection.first())
         
         valuesToKeep = [6, 8, 9, 10,11,12]
         targetValues = [6,8,8,10,10,12]
-        nullValue = -1
-        remappedImage = image.remap(valuesToKeep, targetValues, nullValue)
-        maskedImage = remappedImage.updateMask(remappedImage.neq(nullValue))
+        remappedImage = image.remap( valuesToKeep, targetValues,0 )
+        # maskedImage = remappedImage.updateMask(image.eq(1).Or(image.eq(6)))
+        # # maskedImage = image.updateMask(image.eq(6))
+        
+        # remappedImage = image.remap({
+        #     'from': valuesToKeep,
+        #     'to': targetValues,
+        #     'bandName': 'b1'
+        # })
+        
+        # remappedImage = image.remap(
+        #  sourceValues=valuesToKeep,
+        #  targetValues=targetValues,
+        #  defaultValue=0,
+        #  bandName='b1'
+        # )
         
         # Define visualization parameters
         vis_params = {
-            'bands': ['b1'],  # Update with the correct band names
+            'bands': ['remapped'],  # Update with the correct band names
             'min': 0,
             'max': 12,
             'palette': [
                  '#b2df8a', '#6382ff', '#d7191c', '#f5ff8b', '#dcaa68',
-                 '#33a02c', '#50c361', '#000000', '#dac190', '#a6cee3',
-                 '#38c5f9', '#6e0002'
+                 '#397d49', '#50c361', '#8b9dc3', '#dac190', '#222f5b',
+                 '#38c5f9', '#946b2d'
             ]
         }
         
         # Get the map ID and token
-        map_id_dict = maskedImage.getMapId(vis_params)
+        map_id_dict = remappedImage.getMapId(vis_params)
         
         # Construct the tiles URL template
         tiles_url = map_id_dict['tile_fetcher'].url_format
         
         return JsonResponse({'tiles_url': tiles_url})
     except Exception as e:
+        logger.error('Failed to get Karauli raster', exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
     
 
