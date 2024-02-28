@@ -37,50 +37,24 @@ def fetch_village_analysis(request, village_name):
         return JsonResponse({'data': serialized_data})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
-# def fetch_raster_map(request, village_name):
-#     ee.Initialize(credentials)
-#     try:
-#         # Filter the VillageLevel table for Karauli villages
-#         village_level_table = ee.FeatureCollection("users/jaltolwelllabs/RJ_2001_2011_final_proj32644")
-#         village_feature = village_level_table.filter(ee.Filter.eq('name', village_name)).first()
 
-#         # Get the LULC data for the village area
-#         lulc_image_collection = ee.ImageCollection("users/jaltolwelllabs/LULC/IndiaSAT_V2_draft")
+def list_districts(request):
+    # List of districts
+    districts = [
+        'raichur', 'kurnool', 'uttar bastar kanker', 'west garo hills', 
+        'bankura', 'anantapur', 'puruliya', 'dhamtari', 'koppal', 'paschim medinipur'
+    ]
+    return JsonResponse({'districts': districts})
 
-#         # Select the most recent image or based on a specific date
-#         lulc_image = lulc_image_collection.filterDate('2016-06-01', '2017-07-31').first()
-
-#         # Get the visualization parameters for the LULC data
-#         vis_params = {
-#             'bands': ['your_band_name'],  # Replace with your specific band name
-#             'min': 0,
-#             'max': 12,  # Adjust the max value based on your LULC data
-#             'palette': ['0000FF', '008000', '00FFFF', ...]  # Define color palette for your LULC classes
-#         }
-
-#         # Get the map ID and token for the image
-#         map_id_dict = lulc_image.getMapId(vis_params)
-
-#         # Return the map ID and token
-#         return JsonResponse({
-#             'mapId': map_id_dict['mapid'],
-#             'token': map_id_dict['token']
-#         })
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)
-
-
-def karauli_villages_geojson(request):
+def karauli_villages_geojson(request,district_name):
     # initialize_earth_engine()
     ee.Initialize(credentials)
     try:
         # Fetch the Karauli village features
-        village_level_table = ee.FeatureCollection("users/jaltolwelllabs/RJ_2001_2011_final_proj32644")
-        karauli_villages = village_level_table.filter(ee.Filter.eq('Dist_N_11', 'Karauli'))
-
+        district_level_table = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name))
+        
         # Convert features to GeoJSON
-        geojson = karauli_villages.getInfo()  # This will be a dictionary that includes GeoJSON data
+        geojson = district_level_table.getInfo()  # This will be a dictionary that includes GeoJSON data
         
         return JsonResponse(geojson)
     except Exception as e:
@@ -97,23 +71,20 @@ def calculate_class_area(image, class_value, geometry):
     )
     return area_calculation.get('b1').getInfo()/1e4
 
-def area_change_karauli(request, village_name):
+def area_change_karauli(request,district_name ,village_name):
     # Initialize your Earth Engine credentials if not already initialized
     ee.Initialize(credentials)
 
-    # Define the ImageCollection for Karauli LandUseLandCover
-    image_collection = ee.ImageCollection("users/jaltolwelllabs/LULC/IndiaSAT_V2_draft")
-
     # Define the FeatureCollection for Karauli villages
-    villages_fc = ee.FeatureCollection("users/jaltolwelllabs/RJ_2001_2011_final_proj32644").filter(
-        ee.Filter.eq('Dist_N_11', 'Karauli')
-    )
+    district_fc = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name))
 
     # Filter the FeatureCollection for the specific village
-    village_fc = villages_fc.filter(ee.Filter.eq('VCT_N_11', village_name))
+    village_fc = district_fc.filter(ee.Filter.eq('village_na', village_name))
 
     # Get the geometry for the specific village
     village_geometry = village_fc.geometry()
+     # Define the ImageCollection for Karauli LandUseLandCover
+    image_collection = ee.ImageCollection('users/jaltolwelllabs/LULC/hackathon').filterBounds(village_geometry)
 
     # Define the labels for the classes (only include the specified two classes)
     class_labels = {
@@ -140,12 +111,14 @@ def area_change_karauli(request, village_name):
     return JsonResponse(area_change_data)
     
     
-def get_karauli_raster(request):
+def get_karauli_raster(request, district_name):
     ee.Initialize(credentials)
     
     try:
         # Access the ImageCollection for Karauli
-        image_collection = ee.ImageCollection("users/jaltolwelllabs/LULC/IndiaSAT_V2_draft")
+        district_fc = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name))
+        
+        image_collection = ee.ImageCollection('users/jaltolwelllabs/LULC/hackathon').filterBounds(district_fc)
         
         # Here you might want to select a specific image by date or other criteria.
         # For example, to get the first image:
@@ -154,21 +127,6 @@ def get_karauli_raster(request):
         valuesToKeep = [6, 8, 9, 10,11,12]
         targetValues = [6,8,8,10,10,12]
         remappedImage = image.remap( valuesToKeep, targetValues,0 )
-        # maskedImage = remappedImage.updateMask(image.eq(1).Or(image.eq(6)))
-        # # maskedImage = image.updateMask(image.eq(6))
-        
-        # remappedImage = image.remap({
-        #     'from': valuesToKeep,
-        #     'to': targetValues,
-        #     'bandName': 'b1'
-        # })
-        
-        # remappedImage = image.remap(
-        #  sourceValues=valuesToKeep,
-        #  targetValues=targetValues,
-        #  defaultValue=0,
-        #  bandName='b1'
-        # )
         
         # Define visualization parameters
         vis_params = {
@@ -217,14 +175,12 @@ def getStats(image: ee.Image, geometry: ee.Geometry) -> ee.Image:
     return image.setMulti(stats)
 
 # View function to fetch rainfall data
-def fetch_rainfall_data(request, village_name):
+def fetch_rainfall_data(request, district_name ,village_name):
     ee.Initialize(credentials)
     try:
 
-        villages_fc = ee.FeatureCollection("users/jaltolwelllabs/RJ_2001_2011_final_proj32644").filter(
-        ee.Filter.eq('Dist_N_11', 'Karauli')
-       )
-        village_fc = villages_fc.filter(ee.Filter.eq('VCT_N_11', village_name))
+        district_fc = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name))
+        village_fc = district_fc.filter(ee.Filter.eq('village_na', village_name))
         village_geometry = village_fc.geometry()
         print(village_geometry)
 
