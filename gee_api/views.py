@@ -41,7 +41,7 @@ def fetch_village_analysis(request, village_name):
 def list_districts(request):
     # List of districts
     districts = [
-        'raichur', 'kurnool', 'uttar bastar kanker', 'west garo hills', 
+        'raichur', 'kurnool', 'uttar bastar kanker', 'west garo hills', 'karauli',
         'bankura', 'anantapur', 'puruliya', 'dhamtari', 'koppal', 'paschim medinipur'
     ]
     return JsonResponse({'districts': districts})
@@ -127,6 +127,7 @@ def get_karauli_raster(request, district_name):
         valuesToKeep = [6, 8, 9, 10,11,12]
         targetValues = [6,8,8,10,10,12]
         remappedImage = image.remap( valuesToKeep, targetValues,0 )
+        image.updateMask(image.gte(8))and(image.lte(11))
         
         # Define visualization parameters
         vis_params = {
