@@ -41,7 +41,7 @@ def fetch_village_analysis(request, village_name):
 def list_districts(request):
     # List of districts
     districts = [
-       'anantapur' , 'bankura', 'dhamtari', 'kanker', 'karauli', 'koppal', 'raichur'
+       'anantapur' , 'dhamtari', 'kanker', 'karauli', 'koppal', 'raichur'
     ]
     return JsonResponse({'districts': districts})
 
