@@ -41,8 +41,7 @@ def fetch_village_analysis(request, village_name):
 def list_districts(request):
     # List of districts
     districts = [
-        'raichur', 'kurnool', 'uttar bastar kanker', 'west garo hills', 'karauli',
-        'bankura', 'anantapur', 'puruliya', 'dhamtari', 'koppal', 'paschim medinipur'
+       'anantapur' , 'bankura', 'dhamtari', 'kanker', 'karauli', 'koppal', 'raichur'
     ]
     return JsonResponse({'districts': districts})
 
@@ -116,18 +115,20 @@ def get_karauli_raster(request, district_name):
     
     try:
         # Access the ImageCollection for Karauli
-        district_fc = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name))
+        district_fc = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name)).geometry().centroid()
         
-        image_collection = ee.ImageCollection('users/jaltolwelllabs/LULC/hackathon').filterBounds(district_fc)
+        image_collection = ee.ImageCollection('users/jaltolwelllabs/LULC/hackathon').filterBounds(district_fc).filterDate('2022-07-01','2023-06-30').first()
         
         # Here you might want to select a specific image by date or other criteria.
         # For example, to get the first image:
-        image = ee.Image(image_collection.first())
+        # image = ee.Image(image_collection.filterDate('2022-07-01', '2023-06-30').first())
+        image = ee.Image(image_collection)
         
         valuesToKeep = [6, 8, 9, 10,11,12]
         targetValues = [6,8,8,10,10,12]
         remappedImage = image.remap( valuesToKeep, targetValues,0 )
-        image.updateMask(image.gte(8))and(image.lte(11))
+        mask = remappedImage.gte(6).And(remappedImage.lte(12))
+        remappedImage = remappedImage.updateMask(mask)
         
         # Define visualization parameters
         vis_params = {
