@@ -41,7 +41,7 @@ def fetch_village_analysis(request, village_name):
 def list_districts(request):
     # List of districts
     districts = [
-       'anantapur' , 'dhamtari', 'uttar bastar kanker', 'karauli', 'koppal', 'raichur'
+       'anantapur' , 'dhamtari', 'uttar bastar kanker', 'karauli', 'koppal','thane', 'raichur' 
     ]
     return JsonResponse({'districts': districts})
 
@@ -152,7 +152,7 @@ def get_karauli_raster(request, district_name):
     except Exception as e:
         logger.error('Failed to get Karauli raster', exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
-    
+
 
 precipitation_collection = ee.ImageCollection("users/jaltolwelllabs/IMD/rain")
 
@@ -205,4 +205,66 @@ def fetch_rainfall_data(request, district_name ,village_name):
 
         return JsonResponse({'rainfall_data': rainfall_data})
     except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def get_district_carbon(request, district_name):
+    ee.Initialize(credentials)
+    
+    try:
+        
+        # Access the ImageCollection for Karauli
+        district_fc = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name))
+        
+        image_collection = ee.Image('OpenLandMap/SOL/SOL_ORGANIC-CARBON_USDA-6A1C_M/v02').multiply(5).clipToCollection(district_fc)
+        # Here you might want to select a specific image by date or other criteria.
+        # For example, to get the first image:
+        # image = ee.Image(image_collection.filterDate('2022-07-01', '2023-06-30').first())
+        image = ee.Image(image_collection)
+        
+        
+        vis_params = {
+        'bands': ['b0'],
+        'min': 0.0,
+        'max': 60.0,
+        'palette': ['F9EFDB','9DBC98','638889','green']
+         }
+        
+        
+        # Get the map ID and token
+        map_id_dict = image.getMapId(vis_params)
+        
+        # Construct the tiles URL template
+        tiles_url = map_id_dict['tile_fetcher'].url_format
+        
+        return JsonResponse({'tiles_url': tiles_url})
+    except Exception as e:
+        logger.error('Failed to get Carbon', exc_info=True)
+        return JsonResponse({'error': str(e)}, status=500)
+    
+def get_district_slope(request, district_name):
+    ee.Initialize(credentials)
+    
+    try:
+        
+        # Access the ImageCollection for Karauli
+        district_fc = ee.FeatureCollection('users/jaltolwelllabs/hackathonDists/hackathon_dists').filter(ee.Filter.eq('district_n', district_name))
+        
+        image_collection = ee.Image('USGS/SRTMGL1_003')
+        
+    
+        elevation = image_collection.select('elevation')
+        slope = ee.Terrain.slope(elevation).clipToCollection(district_fc)
+        vis_params = {min: 0, max :60}
+        
+        
+        # Get the map ID and token
+        map_id_dict = slope.getMapId(vis_params)
+        
+        # Construct the tiles URL template
+        tiles_url = map_id_dict['tile_fetcher'].url_format
+        
+        return JsonResponse({'tiles_url': tiles_url})
+    except Exception as e:
+        logger.error('Failed to get Carbon', exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
